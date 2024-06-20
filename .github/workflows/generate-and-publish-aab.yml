@@ -35,6 +35,7 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
           VERSION_CODE: ${{ inputs.app_version }}
           VERSION_NAME: ${{ inputs.app_version_name }}
+          GRADLE_OPTS: '-Dorg.gradle.daemon=false'
         run: |
           ./gradlew bundleRelease \
             -Pandroid.injected.signing.store.file=$KEYFILE \
