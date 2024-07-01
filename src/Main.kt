@@ -26,7 +26,6 @@ import contacts.core.invoke
 import contacts.core.util.events
 import contacts.core.util.names
 import java.util.*
-import java.util.concurrent.TimeUnit
 
 @Composable
 fun Screen(contacts: List<Contact>) {
@@ -184,33 +183,30 @@ private fun ContentResolver.addBirthdayEvent(
     calendarId: Long,
 ) {
     val calendar =
-        Calendar.getInstance().apply {
+        Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
             set(Calendar.MONTH, month) // Months are 0-based in Calendar
             set(Calendar.DAY_OF_MONTH, day)
             if (year != null && year != 0 && year != 1) {
                 set(Calendar.YEAR, year)
             } else {
                 // If year is not provided, use the current year
-                set(Calendar.YEAR, Calendar.getInstance().get(Calendar.YEAR))
+                set(Calendar.YEAR, get(Calendar.YEAR))
             }
         }
 
-    val startMillis = calendar.timeInMillis
-    val endMillis = startMillis + TimeUnit.DAYS.toMillis(1)
-
     val values =
         ContentValues().apply {
-            put(CalendarContract.Events.DTSTART, startMillis)
-            put(CalendarContract.Events.DTEND, endMillis)
+            put(CalendarContract.Events.DTSTART, calendar.timeInMillis)
+            put(CalendarContract.Events.DURATION, "P1D")
             put(CalendarContract.Events.TITLE, "$name's Birthday")
             put(CalendarContract.Events.DESCRIPTION, "Birthday Event")
             put(CalendarContract.Events.CALENDAR_ID, calendarId)
-            put(CalendarContract.Events.EVENT_TIMEZONE, TimeZone.getDefault().id)
+            put(CalendarContract.Events.EVENT_TIMEZONE, calendar.timeZone.id)
             put(CalendarContract.Events.ALL_DAY, 1) // Make it an all-day event
             put(CalendarContract.Events.RRULE, "FREQ=YEARLY") // Set the event to recur yearly
         }
 
-    this.insert(CalendarContract.Events.CONTENT_URI, values)
+    insert(CalendarContract.Events.CONTENT_URI, values)
 }
 
 private fun ContentResolver.deletePreviousCalendars() {
