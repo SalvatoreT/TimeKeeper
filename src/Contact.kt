@@ -1,7 +1,8 @@
 package dev.sal.timekeeper
 
 data class Contact(
-    val firstName: String,
-    val lastName: String,
-    val birthdate: String,
-) 
+    val name: String,
+    val year: Int?,
+    val month: Int,
+    val day: Int,
+)
