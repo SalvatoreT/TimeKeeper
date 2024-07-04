@@ -86,7 +86,6 @@ fun Screen(contacts: List<Contact>) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        contentResolver.deletePreviousCalendars()
         val contactList =
             Contacts(this)
                 .query()
