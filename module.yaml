@@ -7,8 +7,8 @@ repositories:
 dependencies:
   - $compose.foundation
   - $compose.material3
-  - androidx.compose.material3:material3:1.2.0
-  - androidx.activity:activity-compose:1.9.0
+  - androidx.compose.material3:material3:1.2.1
+  - androidx.activity:activity-compose:1.9.1
   - com.github.vestrel00.contacts-android:core:0.3.2
 
 settings:
