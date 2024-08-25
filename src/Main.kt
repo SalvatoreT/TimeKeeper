@@ -59,10 +59,10 @@ fun Screen(contacts: List<Contact>) {
         ) { padding ->
             Column(
                 modifier =
-                    Modifier
-                        .padding(padding)
-                        .verticalScroll(rememberScrollState())
-                        .fillMaxSize(),
+                Modifier
+                    .padding(padding)
+                    .verticalScroll(rememberScrollState())
+                    .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
