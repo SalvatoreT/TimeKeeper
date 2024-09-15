@@ -2,11 +2,14 @@ package dev.sal.timekeeper
 
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.pm.PackageManager
 import android.graphics.Color
 import android.os.Bundle
 import android.provider.CalendarContract
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -14,11 +17,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import contacts.core.Contacts
 import contacts.core.entities.EventEntity
 import contacts.core.equalTo
@@ -28,13 +32,92 @@ import contacts.core.util.names
 import java.util.*
 
 @Composable
+fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
+    val context = LocalContext.current
+
+    // Permissions we need
+    val requiredPermissions =
+        arrayOf(
+            android.Manifest.permission.READ_CONTACTS,
+            android.Manifest.permission.WRITE_CALENDAR,
+        )
+
+    // State to hold whether permissions are granted
+    var allPermissionsGranted by remember {
+        mutableStateOf(
+            requiredPermissions.all { permission ->
+                ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            },
+        )
+    }
+
+    // Launcher to request permissions
+    val permissionsLauncher =
+        rememberLauncherForActivityResult(
+            RequestMultiplePermissions(),
+        ) { permissions ->
+            // Update the state based on whether permissions are granted
+            allPermissionsGranted = permissions.values.all { it }
+        }
+
+    if (allPermissionsGranted) {
+        // Fetch contacts
+        val contactList by produceState(initialValue = emptyList()) {
+            value =
+                Contacts(context)
+                    .query()
+                    .where { Event { (Event.Type equalTo EventEntity.Type.BIRTHDAY) } }
+                    .find()
+                    .mapNotNull { contact ->
+                        val (year, month, day) =
+                            contact
+                                .events()
+                                .find { event -> event.type == EventEntity.Type.BIRTHDAY }
+                                ?.date
+                                ?.let {
+                                    arrayOf(it.year ?: 0, it.month, it.dayOfMonth)
+                                } ?: return@mapNotNull null
+                        val name = contact.names().firstOrNull()?.displayName ?: return@mapNotNull null
+                        Contact(
+                            name = name,
+                            year = year,
+                            month = month,
+                            day = day,
+                        )
+                    }
+        }
+
+        content(contactList)
+    } else {
+        // Show a button to request permissions
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("This app requires Contacts and Calendar permissions to function properly.")
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                // Request permissions
+                permissionsLauncher.launch(requiredPermissions)
+            }) {
+                Text("Grant Permissions")
+            }
+        }
+    }
+}
+
+@Composable
 fun Screen(contacts: List<Contact>) {
     val contentResolver = LocalContext.current.contentResolver
     MaterialTheme {
         Scaffold(
             bottomBar = {
                 Row(
-                    modifier = Modifier.fillMaxWidth().padding(all = 8.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(all = 8.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     Button(onClick = {
@@ -59,16 +142,18 @@ fun Screen(contacts: List<Contact>) {
         ) { padding ->
             Column(
                 modifier =
-                Modifier
-                    .padding(padding)
-                    .verticalScroll(rememberScrollState())
-                    .fillMaxSize(),
+                    Modifier
+                        .padding(padding)
+                        .verticalScroll(rememberScrollState())
+                        .fillMaxSize(),
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 contacts.forEachIndexed { index, it ->
                     ListItem(
-                        headlineContent = { Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}") },
+                        headlineContent = {
+                            Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}")
+                        },
                         leadingContent = {
                             Icon(
                                 if (index % 2 == 0) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
@@ -86,30 +171,10 @@ fun Screen(contacts: List<Contact>) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        val contactList =
-            Contacts(this)
-                .query()
-                .where {
-                    Event { (Event.Type equalTo EventEntity.Type.BIRTHDAY) }
-                }.find()
-                .map { contact ->
-                    val (year, month, day) =
-                        contact
-                            .events()
-                            .find { event -> event.type == EventEntity.Type.BIRTHDAY }
-                            ?.date
-                            ?.let {
-                                arrayOf(it.year ?: 0, it.month, it.dayOfMonth)
-                            } ?: return@map null
-                    Contact(
-                        name = contact.names().first().displayName ?: return@map null,
-                        year = year,
-                        month = month,
-                        day = day,
-                    )
-                }.filterNotNull()
         setContent {
-            Screen(contactList)
+            PermissionScreen { contactList ->
+                Screen(contactList)
+            }
         }
     }
 }
@@ -156,7 +221,10 @@ private fun ContentResolver.createCalendar(): Long {
             put(CalendarContract.Calendars.NAME, "Birthday Calendar")
             put(CalendarContract.Calendars.CALENDAR_DISPLAY_NAME, "Birthdays")
             put(CalendarContract.Calendars.CALENDAR_COLOR, Color.MAGENTA)
-            put(CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL, CalendarContract.Calendars.CAL_ACCESS_OWNER)
+            put(
+                CalendarContract.Calendars.CALENDAR_ACCESS_LEVEL,
+                CalendarContract.Calendars.CAL_ACCESS_OWNER,
+            )
             put(CalendarContract.Calendars.OWNER_ACCOUNT, "dev.sal.timekeeper")
             put(CalendarContract.Calendars.CALENDAR_TIME_ZONE, TimeZone.getDefault().id)
             put(CalendarContract.Calendars.SYNC_EVENTS, 1)
@@ -167,8 +235,10 @@ private fun ContentResolver.createCalendar(): Long {
             .buildUpon()
             .appendQueryParameter(CalendarContract.CALLER_IS_SYNCADAPTER, "true")
             .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_NAME, "TimeKeeper")
-            .appendQueryParameter(CalendarContract.Calendars.ACCOUNT_TYPE, CalendarContract.ACCOUNT_TYPE_LOCAL)
-            .build()
+            .appendQueryParameter(
+                CalendarContract.Calendars.ACCOUNT_TYPE,
+                CalendarContract.ACCOUNT_TYPE_LOCAL,
+            ).build()
 
     val newUri = this.insert(uri, values)
     return newUri?.lastPathSegment?.toLong() ?: -1
