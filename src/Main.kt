@@ -1,11 +1,15 @@
 package dev.sal.timekeeper
 
+import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentValues
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.Color
+import android.net.Uri
 import android.os.Bundle
 import android.provider.CalendarContract
+import android.provider.Settings
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
@@ -22,6 +26,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import contacts.core.Contacts
 import contacts.core.entities.EventEntity
@@ -34,6 +39,7 @@ import java.util.*
 @Composable
 fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
     val context = LocalContext.current
+    val activity = context as? Activity
 
     // Permissions we need
     val requiredPermissions =
@@ -51,6 +57,9 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
         )
     }
 
+    // State to hold whether permissions are denied permanently
+    var permissionsDeniedPermanently by remember { mutableStateOf(false) }
+
     // Launcher to request permissions
     val permissionsLauncher =
         rememberLauncherForActivityResult(
@@ -58,16 +67,28 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
         ) { permissions ->
             // Update the state based on whether permissions are granted
             allPermissionsGranted = permissions.values.all { it }
+
+            if (!allPermissionsGranted) {
+                // Check if any permission is denied permanently
+                permissionsDeniedPermanently =
+                    permissions.entries.any { (permission, isGranted) ->
+                        !isGranted &&
+                            activity?.let {
+                                !ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
+                            } ?: false
+                    }
+            }
         }
 
     if (allPermissionsGranted) {
-        // Fetch contacts
+        // Fetch contacts and display main content
         val contactList by produceState(initialValue = emptyList()) {
             value =
                 Contacts(context)
                     .query()
-                    .where { Event { (Event.Type equalTo EventEntity.Type.BIRTHDAY) } }
-                    .find()
+                    .where {
+                        Event { (Event.Type equalTo EventEntity.Type.BIRTHDAY) }
+                    }.find()
                     .mapNotNull { contact ->
                         val (year, month, day) =
                             contact
@@ -88,6 +109,26 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
         }
 
         content(contactList)
+    } else if (permissionsDeniedPermanently) {
+        // Show message and button to open app settings
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Text("Permissions have been denied permanently. Please enable them in the app settings.")
+            Spacer(modifier = Modifier.height(16.dp))
+            Button(onClick = {
+                // Open app settings
+                val intent =
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", context.packageName, null)
+                    }
+                context.startActivity(intent)
+            }) {
+                Text("Open App Settings")
+            }
+        }
     } else {
         // Show a button to request permissions
         Column(
