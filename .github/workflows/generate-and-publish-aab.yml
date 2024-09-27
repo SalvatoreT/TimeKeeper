@@ -145,6 +145,7 @@ jobs:
           serviceAccountJson: ${{ steps.auth.outputs.credentials_file_path }}
           packageName: dev.sal.timekeeper
           releaseFiles: ${{ github.workspace }}/build/outputs/bundle/release/TimeKeeper-release.aab
+          changesNotSentForReview: true
 
       - name: Upload the AAB
         uses: actions/upload-artifact@v4
