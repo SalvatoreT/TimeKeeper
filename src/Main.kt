@@ -45,6 +45,7 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
     val requiredPermissions =
         arrayOf(
             android.Manifest.permission.READ_CONTACTS,
+            android.Manifest.permission.READ_CALENDAR,
             android.Manifest.permission.WRITE_CALENDAR,
         )
 
