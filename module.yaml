@@ -1,5 +1,4 @@
 product: android/app
-
 repositories:
   - id: jitpack
     url: https://jitpack.io
@@ -12,4 +11,11 @@ dependencies:
   - com.github.vestrel00.contacts-android:core:0.3.2
 
 settings:
+  android:
+    applicationId: dev.sal.timekeeper
+    versionCode: 2 # VERSION_CODE, overwritten in CI
+    versionName: 0.0.0 # VERSION_NAME, overwritten in CI
+    signing:
+      propertiesFile: ./keystore.properties
+      enabled: true
   compose: enabled
