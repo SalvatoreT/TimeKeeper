@@ -34,6 +34,8 @@ import contacts.core.equalTo
 import contacts.core.invoke
 import contacts.core.util.events
 import contacts.core.util.names
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.util.*
 
 @Composable
@@ -152,6 +154,7 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
 @Composable
 fun Screen(contacts: List<Contact>) {
     val contentResolver = LocalContext.current.contentResolver
+    val coroutineScope = rememberCoroutineScope()
     MaterialTheme {
         Scaffold(
             bottomBar = {
@@ -163,20 +166,26 @@ fun Screen(contacts: List<Contact>) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     Button(onClick = {
-                        val calendarId = contentResolver.getOrCreateCalendar()
-                        contacts.forEach {
-                            contentResolver.addBirthdayEvent(
-                                name = it.name,
-                                year = it.year,
-                                month = it.month,
-                                day = it.day,
-                                calendarId = calendarId,
-                            )
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val calendarId = contentResolver.getOrCreateCalendar()
+                            contacts.forEach {
+                                contentResolver.addBirthdayEvent(
+                                    name = it.name,
+                                    year = it.year,
+                                    month = it.month,
+                                    day = it.day,
+                                    calendarId = calendarId,
+                                )
+                            }
                         }
                     }) {
                         Text("Create Calendars")
                     }
-                    Button(onClick = { contentResolver.deletePreviousCalendars() }) {
+                    Button(onClick = {
+                        coroutineScope.launch(Dispatchers.IO) {
+                            contentResolver.deletePreviousCalendars()
+                        }
+                    }) {
                         Text("Delete Calendars")
                     }
                 }
