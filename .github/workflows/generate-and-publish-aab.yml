@@ -24,10 +24,11 @@ jobs:
         with:
           fetch-depth: 0  # Fetch all history to get all tags
 
-      - uses: actions/setup-java@v4
+      - uses: SalvatoreT/setup-java@91fcf56eb35d5cef7b508153f82f538ba472ae3e
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'amper'
 
       - name: Retrieve the secret and decode it to a file
         env:
