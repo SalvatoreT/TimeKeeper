@@ -1,5 +1,6 @@
 package dev.sal.timekeeper
 
+import android.Manifest
 import android.app.Activity
 import android.content.ContentResolver
 import android.content.ContentValues
@@ -19,6 +20,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountCircle
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -46,9 +48,9 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
     // Permissions we need
     val requiredPermissions =
         arrayOf(
-            android.Manifest.permission.READ_CONTACTS,
-            android.Manifest.permission.READ_CALENDAR,
-            android.Manifest.permission.WRITE_CALENDAR,
+            Manifest.permission.READ_CONTACTS,
+            Manifest.permission.READ_CALENDAR,
+            Manifest.permission.WRITE_CALENDAR,
         )
 
     // State to hold whether permissions are granted
@@ -76,9 +78,9 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
                 permissionsDeniedPermanently =
                     permissions.entries.any { (permission, isGranted) ->
                         !isGranted &&
-                            activity?.let {
-                                !ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
-                            } ?: false
+                                activity?.let {
+                                    !ActivityCompat.shouldShowRequestPermissionRationale(it, permission)
+                                } ?: false
                     }
             }
         }
@@ -153,10 +155,13 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
 
 @Composable
 fun Screen(contacts: List<Contact>) {
-    val contentResolver = LocalContext.current.contentResolver
+    val context = LocalContext.current
+    val contentResolver = context.contentResolver
     val coroutineScope = rememberCoroutineScope()
+    val snackbarHostState = remember { SnackbarHostState() }
     MaterialTheme {
         Scaffold(
+            snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 Row(
                     modifier =
@@ -166,6 +171,9 @@ fun Screen(contacts: List<Contact>) {
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     Button(onClick = {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Creating calendars...")
+                        }
                         coroutineScope.launch(Dispatchers.IO) {
                             val calendarId = contentResolver.getOrCreateCalendar()
                             contacts.forEach {
@@ -182,6 +190,9 @@ fun Screen(contacts: List<Contact>) {
                         Text("Create Calendars")
                     }
                     Button(onClick = {
+                        coroutineScope.launch {
+                            snackbarHostState.showSnackbar("Deleting calendars...")
+                        }
                         coroutineScope.launch(Dispatchers.IO) {
                             contentResolver.deletePreviousCalendars()
                         }
@@ -200,19 +211,26 @@ fun Screen(contacts: List<Contact>) {
                 verticalArrangement = Arrangement.Center,
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                contacts.forEachIndexed { index, it ->
+                if (contacts.isEmpty()) {
                     ListItem(
-                        headlineContent = {
-                            Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}")
-                        },
-                        leadingContent = {
-                            Icon(
-                                if (index % 2 == 0) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
-                                contentDescription = "Localized description",
-                            )
-                        },
+                        headlineContent = { Text("No contacts found. Please update your address book.") },
+                        leadingContent = { Icon(Icons.Filled.Warning, contentDescription = "warning icon") }
                     )
-                    HorizontalDivider()
+                } else {
+                    contacts.forEachIndexed { index, it ->
+                        ListItem(
+                            headlineContent = {
+                                Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}")
+                            },
+                            leadingContent = {
+                                Icon(
+                                    if (index % 2 == 0) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
+                                    contentDescription = "account icon",
+                                )
+                            },
+                        )
+                        HorizontalDivider()
+                    }
                 }
             }
         }
