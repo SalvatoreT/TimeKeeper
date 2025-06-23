@@ -167,7 +167,7 @@ fun Screen(contacts: List<Contact>) {
                     modifier =
                         Modifier
                             .fillMaxWidth()
-                            .padding(all = 8.dp),
+                            .padding(all = 16.dp),
                     horizontalArrangement = Arrangement.SpaceEvenly,
                 ) {
                     Button(onClick = {
