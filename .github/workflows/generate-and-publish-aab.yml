@@ -31,6 +31,8 @@ jobs:
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-amper-${{ hashFiles('**/module.xml', 'amper', 'amper.bat', 'gradle/*.versions.toml') }}
+          restore-keys: |
+            ${{ runner.os }}-amper-
 
       - name: Retrieve the secret and decode it to a file
         env:
