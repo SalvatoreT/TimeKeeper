@@ -8,6 +8,7 @@ dependencies:
   - $compose.material3
   - $libs.activity.compose
   - $libs.material3
+  - $libs.material.icons
   - $libs.contacts.core
 
 settings:
