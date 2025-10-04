@@ -27,12 +27,10 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cache/Amper
+            ~/.cache/JetBrains/Amper
             ~/.gradle/caches
             ~/.gradle/wrapper
           key: ${{ runner.os }}-amper-${{ hashFiles('**/module.xml', 'amper', 'amper.bat', 'gradle/*.versions.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-amper-
 
       - name: Retrieve the secret and decode it to a file
         env:
