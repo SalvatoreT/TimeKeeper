@@ -13,6 +13,9 @@ dependencies:
 
 settings:
   android:
+    compileSdk: 35
+    targetSdk: 35
+    minSdk: 26
     applicationId: dev.sal.timekeeper
     versionCode: 2 # VERSION_CODE, overwritten in CI
     versionName: 0.0.0 # VERSION_NAME, overwritten in CI
