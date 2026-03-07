@@ -212,23 +212,27 @@ fun Screen(contacts: List<Contact>) {
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (contacts.isEmpty()) {
-                    ListItem(
-                        headlineContent = { Text("No contacts found. Please update your address book.") },
-                        leadingContent = { Icon(Icons.Filled.Warning, contentDescription = "warning icon") }
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth().padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Filled.Warning, contentDescription = "warning icon")
+                        Spacer(modifier = Modifier.width(16.dp))
+                        Text("No contacts found. Please update your address book.")
+                    }
                 } else {
                     contacts.forEachIndexed { index, it ->
-                        ListItem(
-                            headlineContent = {
-                                Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}")
-                            },
-                            leadingContent = {
-                                Icon(
-                                    if (index % 2 == 0) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
-                                    contentDescription = "account icon",
-                                )
-                            },
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth().padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                if (index % 2 == 0) Icons.Filled.AccountCircle else Icons.Outlined.AccountCircle,
+                                contentDescription = "account icon",
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text("${it.name} ${it.month + 1}/${it.day}${if ((it.year ?: 0) > 1) "/" + it.year else ""}")
+                        }
                         HorizontalDivider()
                     }
                 }
