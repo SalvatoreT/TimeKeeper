@@ -1,5 +1,4 @@
 [libraries]
-activity-compose = "androidx.activity:activity-compose:1.11.0"
-contacts-core = "com.github.vestrel00.contacts-android:core:0.4.0"
-material3 = "androidx.compose.material3:material3:1.4.0"
+activity-compose = "androidx.activity:activity-compose:1.13.0"
+contacts-core = "com.github.vestrel00.contacts-android:core:0.5.0"
 material-icons = "androidx.compose.material:material-icons-core:1.7.8"
