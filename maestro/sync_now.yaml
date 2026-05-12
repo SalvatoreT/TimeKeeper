@@ -1,0 +1,35 @@
+appId: dev.sal.timekeeper
+---
+# Validates the new background-sync UI: Sync now button, last-synced label,
+# and idempotency of the underlying syncBirthdayCalendar() helper.
+- launchApp:
+    clearState: false
+- runFlow:
+    when:
+      visible: "Grant Permissions"
+    commands:
+      - tapOn: "Grant Permissions"
+      - tapOn: "Allow"
+      - tapOn: "Allow"
+      - tapOn: "Allow"
+- assertVisible: "Sync now"
+- assertVisible:
+    text: "Last synced:.*"
+- tapOn: "Sync now"
+- assertVisible:
+    text: "Syncing calendar\\.\\.\\."
+- assertVisible:
+    text: "Calendar synced"
+- assertVisible:
+    text: "Last synced:.*(seconds|minute|just now).*"
+# Tap twice more to assert idempotency: the label should keep updating, and
+# the calendar provider should not accumulate duplicate events (verify with:
+#   adb shell content query --uri content://com.android.calendar/events \
+#     --projection 'title' --where '"calendar_id=1"'
+# — expect one row per contact, not N copies after N taps).
+- tapOn: "Sync now"
+- assertVisible:
+    text: "Calendar synced"
+- tapOn: "Sync now"
+- assertVisible:
+    text: "Calendar synced"

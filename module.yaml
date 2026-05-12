@@ -9,6 +9,7 @@ dependencies:
   - $libs.activity.compose
   - $libs.material.icons
   - $libs.contacts.core
+  - $libs.work.runtime
 
 settings:
   android:
