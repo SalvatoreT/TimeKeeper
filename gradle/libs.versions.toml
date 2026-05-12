@@ -2,3 +2,4 @@
 activity-compose = "androidx.activity:activity-compose:1.13.0"
 contacts-core = "com.github.vestrel00.contacts-android:core:0.5.0"
 material-icons = "androidx.compose.material:material-icons-core:1.7.8"
+work-runtime = "androidx.work:work-runtime-ktx:2.10.0"
