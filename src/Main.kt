@@ -12,6 +12,7 @@ import android.text.format.DateUtils
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts.RequestMultiplePermissions
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
@@ -81,36 +82,40 @@ fun PermissionScreen(content: @Composable (List<Contact>) -> Unit) {
             value = withContext(Dispatchers.IO) { context.loadBirthdayContacts() }
         }
         content(contactList)
-    } else if (permissionsDeniedPermanently) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("Permissions have been denied permanently. Please enable them in the app settings.")
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                val intent =
-                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                        data = Uri.fromParts("package", context.packageName, null)
-                    }
-                context.startActivity(intent)
-            }) {
-                Text("Open App Settings")
-            }
-        }
     } else {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text("This app requires Contacts and Calendar permissions to function properly.")
-            Spacer(modifier = Modifier.height(16.dp))
-            Button(onClick = {
-                permissionsLauncher.launch(requiredPermissions)
-            }) {
-                Text("Grant Permissions")
+        MaterialTheme {
+            Surface(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .windowInsetsPadding(WindowInsets.safeDrawing)
+                            .padding(horizontal = 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    if (permissionsDeniedPermanently) {
+                        Text("Permissions have been denied permanently. Please enable them in the app settings.")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            val intent =
+                                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                                    data = Uri.fromParts("package", context.packageName, null)
+                                }
+                            context.startActivity(intent)
+                        }) {
+                            Text("Open App Settings")
+                        }
+                    } else {
+                        Text("This app requires Contacts and Calendar permissions to function properly.")
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Button(onClick = {
+                            permissionsLauncher.launch(requiredPermissions)
+                        }) {
+                            Text("Grant Permissions")
+                        }
+                    }
+                }
             }
         }
     }
@@ -154,7 +159,11 @@ fun Screen(contacts: List<Contact>) {
             snackbarHost = { SnackbarHost(hostState = snackbarHostState) },
             bottomBar = {
                 Column(
-                    modifier = Modifier.fillMaxWidth().padding(all = 16.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .windowInsetsPadding(WindowInsets.navigationBars)
+                            .padding(all = 16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     Button(onClick = {
@@ -221,6 +230,7 @@ fun Screen(contacts: List<Contact>) {
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        enableEdgeToEdge()
         setContent {
             PermissionScreen { contactList ->
                 Screen(contactList)

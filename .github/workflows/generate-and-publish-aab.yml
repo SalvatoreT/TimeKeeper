@@ -27,12 +27,12 @@ jobs:
       - uses: actions/cache@v4
         with:
           path: |
-            ~/.cache/JetBrains/Amper
+            ~/.cache/JetBrains/Kotlin
             ~/.gradle/caches
             ~/.gradle/wrapper
-          key: ${{ runner.os }}-amper-${{ hashFiles('**/module.xml', 'amper', 'amper.bat', 'gradle/*.versions.toml') }}
+          key: ${{ runner.os }}-kotlin-${{ hashFiles('**/module.yaml', 'kotlin', 'kotlin.bat', 'gradle/*.versions.toml') }}
           restore-keys: |
-            ${{ runner.os }}-amper-
+            ${{ runner.os }}-kotlin-
 
       - name: Retrieve the secret and decode it to a file
         env:
@@ -69,7 +69,7 @@ jobs:
 
       - name: Build Release Android app
         run: |
-          ./amper package \
+          ./kotlin package \
             --module TimeKeeper \
             --platform android \
             --variant release \
